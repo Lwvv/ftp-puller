@@ -1,0 +1,54 @@
+FTP 文件抽取服务 — 服务端安装文档
+====================================
+
+一、环境要求
+- Linux 系统（支持 systemd）
+- root 权限执行安装
+- 能联网拉依赖，或用交付包内置的 lrzsz 离线 rpm
+
+二、安装（只部署，不启动服务）
+1. 把交付包 ftp_puller_pkg.zip 传到服务器，解压得到文件夹 ftp_puller_pkg/
+      unzip ftp_puller_pkg.zip
+2. 进入文件夹执行安装
+      cd ftp_puller_pkg
+      bash install.sh
+   装完后：程序在 /opt/ftp_puller/；并自动建好网闸账户 ftpadmin、启动 vsftpd。
+
+三、填配置
+      vi /opt/ftp_puller/ftp_puller.conf
+  必填项（详见文件内注释）：
+      FTP_HOST     源端 FTP 地址
+      FTP_USER     源端 FTP 账户
+      FTP_PASS     源端 FTP 密码（默认是占位符，必须改成真实密码）
+      REMOTE_DIR   远端抽取根目录
+      LOCAL_DIR    本地落盘目录（须与网闸目录一致，默认 /home/ftpadmin）
+  提示：源端若开 chroot，登录后根“/”即家目录，REMOTE_DIR 填 / 即可。
+
+四、测试并启动（交互式）
+      bash /opt/ftp_puller/test.sh
+   脚本会依次：
+      1) 只读预检（不下载、不删除）：配置齐全 + 本地目录可写 + 源端 FTP 能登录进目录
+      2) 问“是否启用源端删除（搬家式）”→ 写入 DELETE_SOURCE
+      3) 问“是否现在启动并开机自启”→ 输 y 才启动；启动成功后自动删掉交付包
+   预检未通过会停下，按提示改 conf 后重跑本脚本即可。
+
+五、网闸对接信息（供配置网闸使用）
+      地址 : ftp://<本机网卡IP>:21
+      账户 : ftpadmin
+      密码 : CHANGE_ME_GATEWAY_PASSWORD
+      目录 : /home/ftpadmin
+   （install.sh 会自动打印真实网卡 IP；LOCAL_DIR 须与该目录保持一致）
+
+六、常用运维
+      看日志     : tail -f /opt/ftp_puller/logs/ftp_puller_verify.log
+      启动       : systemctl start ftp_puller
+      停止       : systemctl stop ftp_puller
+      开机自启   : systemctl enable ftp_puller
+      卸载       : bash /opt/ftp_puller/uninstall.sh
+
+七、注意事项
+  1. 授权：把供应商给的 license.dat 放到 /opt/ftp_puller/license.dat。
+     install.sh 已自动从交付包复制一份（示例占位）。正式交付请替换为真实授权，
+     缺合法且未过期的 license.dat 程序会拒绝启动。
+  2. 网闸账户密码为固定口令 CHANGE_ME_GATEWAY_PASSWORD（install.sh 写盘到 /opt/ftp_puller/.gate_pass）。
+  3. MIN_AGE 用来跳过“正在写入”的半截文件；INTERVAL 是每轮抽取间隔（秒），与 MIN_AGE 无关。

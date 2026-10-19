@@ -1,0 +1,19 @@
+[Unit]
+Description=FTP Puller (verified move, 带校验搬家式抽取)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# 主脚本路径(由 install.sh 部署到 /opt/ftp_puller)
+ExecStart=/usr/bin/python3 /opt/ftp_puller/ftp_puller_verify.py
+# 指定配置文件(也可改用默认 ~/.ftp_puller.conf)
+Environment=FTP_PULLER_CONF=/opt/ftp_puller/ftp_puller.conf
+# 崩溃/异常后自动拉起, 30 秒后重试
+Restart=always
+RestartSec=30
+User=root
+# 脚本自带日志: ~/ftp_puller_verify.log
+
+[Install]
+WantedBy=multi-user.target

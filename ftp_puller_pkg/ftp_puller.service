@@ -1,0 +1,19 @@
+[Unit]
+Description=FTP Puller 定时抽取服务 (从远端 FTP 拉取文件并校验)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# 主脚本路径(由 install.sh 部署到 /opt/ftp_puller)
+ExecStart=/opt/ftp_puller/ftp_puller
+# 指定配置文件(也可改用默认 ~/.ftp_puller.conf)
+Environment=FTP_PULLER_CONF=/opt/ftp_puller/ftp_puller.conf
+# 崩溃/异常后自动拉起, 30 秒后重试
+Restart=always
+RestartSec=30
+User=root
+# 脚本自带日志(按天轮转): /opt/ftp_puller/logs/ftp_puller_verify.log
+
+[Install]
+WantedBy=multi-user.target
